@@ -10,7 +10,7 @@ import javax.persistence.Table;
 import lombok.Data;
 
 @Entity
-@Table(name = "SERVICE_AUDIT_ENTITY")
+//@Table(name = "SERVICE_AUDIT_ENTITY")
 @Data
 public class ServiceAuditEntity {
 	

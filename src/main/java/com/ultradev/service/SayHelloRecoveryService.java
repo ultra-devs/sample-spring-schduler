@@ -31,12 +31,13 @@ public class SayHelloRecoveryService {
 	ServiceAuditRepository serviceAuditRepository;
 	@Autowired
 	SayHelloService sayHelloService;
+
 	@Scheduled(cron = "${application.recovery.crontab}") //
 	public void sayHelloRecoveryService() {
 		try {
-			
-			log.info("SayHelloRecoveryService is getting called ");
-			List<ServiceAuditEntity> serviceAuditEntity = serviceAuditRepository.findByTimeStamp();
+
+			log.info("SayHelloRecoveryService is getting called " + serviceAuditRepository.findAll());
+			List<ServiceAuditEntity> serviceAuditEntity = serviceAuditRepository.findAll();
 			if (!isEmpty(serviceAuditEntity)) {
 				ServiceAuditEntity auditEntry = CollectionUtils.firstElement(serviceAuditEntity);
 				int retryCount = auditEntry.getRetryCount();
@@ -44,10 +45,15 @@ public class SayHelloRecoveryService {
 					log.debug("Retry Count has exceeded max limit :{} please trigger job manually", retryCount);
 					return;
 				}
+				// increased retry count
+				retryCount++;
+
 				auditEntry.setRetryCount(retryCount++);
+
 				serviceAuditRepository.save(auditEntry);
-				log.info("Retrying Job ");
+				log.info("Submitted  Job for retrigger ");
 				sayHelloService.sayHello();
+				log.info("Retrigger completed  Successfully ");
 			}
 		} catch (Exception e) {
 			log.error("Retry job has Failed ", e);

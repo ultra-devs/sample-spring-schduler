@@ -50,7 +50,7 @@ public class SayHelloService {
 	
 	private void publishJobAuditStatus()
 	{
-		List<ServiceAuditEntity> existingAuditList = serviceAuditRepository.findByTimeStamp();
+		List<ServiceAuditEntity> existingAuditList = serviceAuditRepository.findAll();
 		
 		if(CollectionUtils.isEmpty(existingAuditList))
 		{

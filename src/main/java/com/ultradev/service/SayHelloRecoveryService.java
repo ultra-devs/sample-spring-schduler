@@ -70,6 +70,8 @@ public class SayHelloRecoveryService {
 	private boolean maxCountPreFlightCheck(int count) {
 		if (count > retryMaxCount) {
 			log.info("Retry Count has exceeded max limit :{} please trigger job  manually", retryMaxCount);
+			javaMailService.sendHtmlMessage("Failure:File Parsing Retry Attempt  Failed" + new Date(),
+					"<h1>Retry Count has exceeded max limit :{} please trigger job  manually .. curl http://localhost:9091/batch/run</h1>");
 			return false;
 		}
 		return true;

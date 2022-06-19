@@ -21,8 +21,6 @@ public class SayHelloService {
 
 	org.slf4j.Logger log = LoggerFactory.getLogger(SayHelloService.class);
 
-	@Value("${application.introduce.error}")
-	boolean isApplicationError;
 
 	@Value("${application.jobid}")
 	String jobId;

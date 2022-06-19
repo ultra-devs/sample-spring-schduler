@@ -17,8 +17,7 @@ import com.ultradev.util.JavaMailService;
 
 public class SayHelloRecoveryService {
 	org.slf4j.Logger log = LoggerFactory.getLogger(SayHelloRecoveryService.class);
-	@Value("${application.introduce.error}")
-	boolean isApplicationError;
+
 	@Value("${application.recovery.crontab}")
 	String jobId;
 	@Value("${application.retryMaxCount}")

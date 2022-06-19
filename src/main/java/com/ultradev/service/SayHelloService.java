@@ -1,68 +1,67 @@
 package com.ultradev.service;
 
 import java.util.Date;
-import java.util.List;
 
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
+import com.ultradev.dao.RecoverAuditDBService;
 import com.ultradev.dao.ServiceAuditEntity;
-import com.ultradev.dao.ServiceAuditRepository;
+import com.ultradev.util.JavaMailService;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Service
-@Slf4j
 public class SayHelloService {
-	
+
+	org.slf4j.Logger log = LoggerFactory.getLogger(SayHelloService.class);
+
 	@Value("${application.introduce.error}")
 	boolean isApplicationError;
-	
-	
+
 	@Value("${application.jobid}")
 	String jobId;
 
-	
 	@Autowired
-	ServiceAuditRepository serviceAuditRepository;
-	
+	RecoverAuditDBService recoverAuditDBService;
+	@Autowired
+	JavaMailService javaMailService;
 
-	
 	@Scheduled(cron = "${application.crontab}") //
-	public void sayHello()
-	{
+	public void sayHello() {
 		try {
-		if(isApplicationError)// this is simulating an error condition
-		{
-			throw new IllegalStateException("Schedule Job Has Failed ");
-		}
-		log.info("This is hello service running ");
-		}
-		catch (Exception e) {
-			log.error("Exception has Occured ",e);
+			processHello();
+			javaMailService.sendHtmlMessage("Success: File Parsing ",
+					"<h1>Batch File Parsing Completed Successfully </h1>", null);
+
+		} catch (Exception e) {
+			log.error("File Parsing has failed with Error :{} ", e);
+			javaMailService.sendHtmlMessage("Failure:File Parsing is Failed" + new Date(),
+					"<h1>Batch File Parsing Failed , Will be reattempted by Retry Job </h1>", null);
 			publishJobAuditStatus();
 		}
 	}
-	
-	
-	private void publishJobAuditStatus()
-	{
-		List<ServiceAuditEntity> existingAuditList = serviceAuditRepository.findAll();
-		
-		if(CollectionUtils.isEmpty(existingAuditList))
-		{
-		ServiceAuditEntity serviceAuditEntity= new ServiceAuditEntity();
-		serviceAuditEntity.setJobId(jobId);
-		serviceAuditEntity.setTimeStamp(new Date());
-		serviceAuditRepository.save(serviceAuditEntity);
-		log.info("Successfully Submitted Audit Job ");
+
+	private void publishJobAuditStatus() {
+		if (!recoverAuditDBService.doesFallBackEntryExist()) {
+			ServiceAuditEntity serviceAuditEntity = new ServiceAuditEntity();
+			serviceAuditEntity.setJobId(jobId);
+			serviceAuditEntity.setTimeStamp(new Date());
+			recoverAuditDBService.saveFallbackAuditEntry(serviceAuditEntity);
+			// log.info("Successfully Submitted Audit Job ");
 		}
-		
-		
-		
+
+	}
+
+	public void processHello() {
+		String x = null;
+		x.charAt(0);
+		if (recoverAuditDBService.doesFallBackEntryExist())
+			log.info("This is hello services running");
+		System.out.println("This is hello services running");
 	}
 
 }

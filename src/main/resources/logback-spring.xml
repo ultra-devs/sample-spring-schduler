@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+<!-- 	<springProperty scope="context" name="springAppName"
+		source="spring.application.name" />
+	<springProperty scope="context" name="logfilename"
+		source="apcat.admin.company.logfile" />
+	<springProperty scope="context" name="springProfileName"
+		source="spring.profiles.active" />
+	<springProperty scope="context" name="errorNotification"
+		source="error.notification.ids" />
+
+	<property name="LOG_DIR" value="${logfilename}" />
+ -->
+	<appender name="STDOUT"
+		class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<Pattern>%d{yyyy-MM-dd HH:mm:ss.sss} %-1level [%thread] %c - [
+				%X{uri} # %X{transactionId} # %X{spanId} # %X{traceId} #
+				%X{userName} ]: %msg%n</Pattern>
+		</encoder>
+	</appender>
+<!-- 	<logger name="com.guycarp" level="DEBUG" />
+	<logger name="org" level="INFO" />
+	<logger name="com.netflix" level="DEBUG" />
+	<logger name="com.zaxxer" level="INFO" /> -->
+
+	<springProfile name="default">
+		<appender name="ROLLING_FILE"
+			class="ch.qos.logback.core.rolling.RollingFileAppender">
+			<file>c:/logs/batch.log</file>
+			<rollingPolicy
+				class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+				<fileNamePattern>c:/logs/batch_%d{yyyy-MM-dd}.%i.log
+				</fileNamePattern>
+				<maxFileSize>10MB</maxFileSize>
+			</rollingPolicy>
+			<encoder>
+				<Pattern>%d{yyyy-MM-dd HH:mm:ss.sss} %-1level [%thread] %c - [
+					%X{uri} # %X{transactionId} # %X{spanId} # %X{traceId} #
+					%X{userName} ]: %msg%n</Pattern>
+			</encoder>
+		</appender>
+		<appender name="BATCH_SMTP"
+			class="ch.qos.logback.classic.net.SMTPAppender">
+	<!-- 		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+				<level>ERROR</level>
+			</filter> -->
+			<smtpHost>smtp.gmail.com</smtpHost>
+			<smtpPort>587</smtpPort>
+			<STARTTLS>true</STARTTLS>
+			<asynchronousSending>false</asynchronousSending>
+			<username>java.devd.007@gmail.com</username>
+			<password>upkmssegbrcjpozwuemp</password>
+			<to>ultradev.nitc@gmail.com</to>
+			<from>java.devd.007@gmail.com</from>
+			<subject>ULTRADEV: %logger{20} - %msg</subject>
+		</appender>
+		<root level="INFO">
+			<appender-ref ref="STDOUT" />
+			<appender-ref ref="BATCH_SMTP" />
+			<!-- <appender-ref ref="ROLLING_FILE" /> -->
+		</root>
+	</springProfile>
+<!-- 	<springProfile name="localhost,simulator">
+		<root level="DEBUG">
+			<appender-ref ref="STDOUT" />
+		</root>
+	</springProfile> -->
+</configuration>

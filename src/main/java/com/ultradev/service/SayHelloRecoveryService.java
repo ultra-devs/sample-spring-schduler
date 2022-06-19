@@ -1,63 +1,65 @@
 package com.ultradev.service;
 
-import static org.springframework.util.CollectionUtils.isEmpty;
+import java.util.Date;
 
-import java.util.List;
-
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
+import com.ultradev.dao.RecoverAuditDBService;
 import com.ultradev.dao.ServiceAuditEntity;
-import com.ultradev.dao.ServiceAuditRepository;
-
-import ch.qos.logback.classic.Logger;
-import jdk.internal.org.jline.utils.Log;
-import lombok.extern.slf4j.Slf4j;
+import com.ultradev.util.JavaMailService;
 
 @Service
-@Slf4j
-public class SayHelloRecoveryService {
 
+public class SayHelloRecoveryService {
+	org.slf4j.Logger log = LoggerFactory.getLogger(SayHelloRecoveryService.class);
 	@Value("${application.introduce.error}")
 	boolean isApplicationError;
 	@Value("${application.recovery.crontab}")
 	String jobId;
 	@Value("${application.retryMaxCount}")
 	int retryMaxOunt;
+
 	@Autowired
-	ServiceAuditRepository serviceAuditRepository;
+	RecoverAuditDBService recoverAuditDBService;
 	@Autowired
 	SayHelloService sayHelloService;
 
+	@Autowired
+	JavaMailService javaMailService;
+
 	@Scheduled(cron = "${application.recovery.crontab}") //
 	public void sayHelloRecoveryService() {
+
+		int retryCount = 0;
 		try {
-
-			log.info("SayHelloRecoveryService is getting called " + serviceAuditRepository.findAll());
-			List<ServiceAuditEntity> serviceAuditEntity = serviceAuditRepository.findAll();
-			if (!isEmpty(serviceAuditEntity)) {
-				ServiceAuditEntity auditEntry = CollectionUtils.firstElement(serviceAuditEntity);
-				int retryCount = auditEntry.getRetryCount();
-				if (retryCount > retryMaxOunt) {
-					log.debug("Retry Count has exceeded max limit :{} please trigger job manually", retryCount);
-					return;
-				}
-				// increased retry count
-				retryCount++;
-
-				auditEntry.setRetryCount(retryCount++);
-
-				serviceAuditRepository.save(auditEntry);
-				log.info("Submitted  Job for retrigger ");
-				sayHelloService.sayHello();
-				log.info("Retrigger completed  Successfully ");
+			ServiceAuditEntity fallBackEntry = recoverAuditDBService.getFallBackEntry();
+			/* if (!ObjectUtils.isEmpty(fallBackEntry)) { */
+			retryCount = fallBackEntry.getRetryCount();
+			if (retryCount > retryMaxOunt) {
+				log.debug("Retry Count has exceeded max limit :{} please trigger job  manually", retryCount);
+				return;
 			}
+			retryCount++;
+			fallBackEntry.setRetryCount(retryCount++);
+			recoverAuditDBService.saveFallbackAuditEntry(fallBackEntry);
+			log.info("Submitted Job for retrigger ");
+			sayHelloService.processHello();
+			log.info("Retrigger completed Successfully ");
+
 		} catch (Exception e) {
-			log.error("Retry job has Failed ", e);
+			retryFailed(retryCount);
 		}
 
+	}
+
+	private void retryFailed(int retryCount) {
+		javaMailService.sendHtmlMessage("Failure:File Parsing Retry Attempt  Failed" + new Date(),
+				String.format("<h1>Batch File retry Parsing Failed , Retry Attempt left :%d </h1>",
+						(retryMaxOunt - retryCount)),
+				null);
 	}
 }

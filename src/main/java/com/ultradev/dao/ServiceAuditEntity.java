@@ -19,8 +19,19 @@ public class ServiceAuditEntity {
 	String jobId;
 	@Column(name = "TIME_STAMP")
 	java.util.Date timeStamp;
+	public boolean isStatus() {
+		return status;
+	}
+
+	public void setStatus(boolean status) {
+		this.status = status;
+	}
+
 	@Column(name = "RETRY_COUNT")
 	int retryCount;
+	@Column(name = "IS_SUCCESS")
+	boolean status=true;
+
 
 	public long getId() {
 		return id;

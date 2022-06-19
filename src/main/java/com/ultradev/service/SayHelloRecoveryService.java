@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 import com.ultradev.dao.RecoverAuditDBService;
 import com.ultradev.dao.ServiceAuditEntity;
@@ -21,7 +22,7 @@ public class SayHelloRecoveryService {
 	@Value("${application.recovery.crontab}")
 	String jobId;
 	@Value("${application.retryMaxCount}")
-	int retryMaxOunt;
+	int retryMaxCount;
 
 	@Autowired
 	RecoverAuditDBService recoverAuditDBService;
@@ -37,29 +38,46 @@ public class SayHelloRecoveryService {
 		int retryCount = 0;
 		try {
 			ServiceAuditEntity fallBackEntry = recoverAuditDBService.getFallBackEntry();
-			/* if (!ObjectUtils.isEmpty(fallBackEntry)) { */
-			retryCount = fallBackEntry.getRetryCount();
-			if (retryCount > retryMaxOunt) {
-				log.debug("Retry Count has exceeded max limit :{} please trigger job  manually", retryCount);
+			if (ObjectUtils.isEmpty(fallBackEntry)) {
+				log.info("No Entry found for fall back , retrigger is not required ");
 				return;
 			}
-			retryCount++;
-			fallBackEntry.setRetryCount(retryCount++);
-			recoverAuditDBService.saveFallbackAuditEntry(fallBackEntry);
-			log.info("Submitted Job for retrigger ");
-			sayHelloService.processHello();
-			log.info("Retrigger completed Successfully ");
+			retryCount = fallBackEntry.getRetryCount();
+			if (maxCountPreFlightCheck(retryCount) && jobStatusCheck(fallBackEntry)) {
+				retryCount++;
+				fallBackEntry.setRetryCount(retryCount);
+				recoverAuditDBService.saveFallbackAuditEntry(fallBackEntry);
+				sayHelloService.processHello();
+				// set success Status to true
+				fallBackEntry.setStatus(true);
+				recoverAuditDBService.saveFallbackAuditEntry(fallBackEntry);
+				log.info("Re-trigger completed Successfully ");
+			}
 
 		} catch (Exception e) {
+			log.error("Batch File Retry job failed ", e);
+			e.printStackTrace();
 			retryFailed(retryCount);
 		}
 
 	}
 
+	private boolean jobStatusCheck(ServiceAuditEntity fallBackEntry) {
+		return !fallBackEntry.isStatus();
+
+	}
+
+	private boolean maxCountPreFlightCheck(int count) {
+		if (count > retryMaxCount) {
+			log.info("Retry Count has exceeded max limit :{} please trigger job  manually", retryMaxCount);
+			return false;
+		}
+		return true;
+
+	}
+
 	private void retryFailed(int retryCount) {
-		javaMailService.sendHtmlMessage("Failure:File Parsing Retry Attempt  Failed" + new Date(),
-				String.format("<h1>Batch File retry Parsing Failed , Retry Attempt left :%d </h1>",
-						(retryMaxOunt - retryCount)),
-				null);
+		javaMailService.sendHtmlMessage("Failure:File Parsing Retry Attempt  Failed" + new Date(), String.format(
+				"<h1>Batch File retry Parsing Failed , Retry Attempt left :%d </h1>", (retryMaxCount - retryCount)));
 	}
 }

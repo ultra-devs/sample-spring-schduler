@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
 
-<!-- 	<springProperty scope="context" name="springAppName"
+ 	<springProperty scope="context" name="springAppName"
 		source="spring.application.name" />
 	<springProperty scope="context" name="logfilename"
 		source="apcat.admin.company.logfile" />
@@ -15,9 +15,7 @@
 	<appender name="STDOUT"
 		class="ch.qos.logback.core.ConsoleAppender">
 		<encoder>
-			<Pattern>%d{yyyy-MM-dd HH:mm:ss.sss} %-1level [%thread] %c - [
-				%X{uri} # %X{transactionId} # %X{spanId} # %X{traceId} #
-				%X{userName} ]: %msg%n</Pattern>
+			<Pattern>%d{yyyy-MM-dd HH:mm:ss.sss} %-1level [%thread] %c - [ # %X{spanId} # %X{traceId} ]: %msg%n</Pattern>
 		</encoder>
 	</appender>
 <!-- 	<logger name="com.guycarp" level="DEBUG" />
@@ -51,7 +49,7 @@
 			<STARTTLS>true</STARTTLS>
 			<asynchronousSending>false</asynchronousSending>
 			<username>java.devd.007@gmail.com</username>
-			<password>upkmssegbrcjpozwuemp</password>
+			<password>kmssegbrcjpozwue</password>
 			<to>ultradev.nitc@gmail.com</to>
 			<from>java.devd.007@gmail.com</from>
 			<subject>ULTRADEV: %logger{20} - %msg</subject>

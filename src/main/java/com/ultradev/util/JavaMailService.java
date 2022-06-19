@@ -1,5 +1,6 @@
 package com.ultradev.util;
 
+import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,25 +28,51 @@ public class JavaMailService {
 		javaMailSender.send(msg);
 
 	}
+	
 
-	public void sendHtmlMessage(String subject, String textMessage, String attachmentFile)
-			{
+
+	
+	public void sendHtmlMessage(String subject, String textMessage) {
 
 		try {
-		MimeMessage msg = javaMailSender.createMimeMessage();
-		// true = multipart message
-		MimeMessageHelper helper = new MimeMessageHelper(msg, true);
-		helper.setTo(mailReceiver);
-		helper.setSubject(subject);
-		helper.setText(textMessage, true);
-		if (org.springframework.util.StringUtils.hasText(attachmentFile))
-			helper.addAttachment("my_photo.png", new ClassPathResource(attachmentFile));
-		javaMailSender.send(msg);
-		}
-		catch (Exception e) {
-			throw new IllegalStateException("Mail service failed with Exception: "+e.getMessage());
+			MimeMessage msg = javaMailSender.createMimeMessage();
+			// true = multipart message
+			MimeMessageHelper helper = new MimeMessageHelper(msg, true);
+			helper.setTo(mailReceiver);
+			helper.setSubject(subject);
+			helper.setText(textMessage, true);
+			javaMailSender.send(msg);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new IllegalStateException("Mail service failed with Exception: " + e.getMessage());
+
 		}
 
+	}
+	
+	public void sendHtmlMessageWithAttachment(String subject, String textMessage,String attchmentFileName) {
+
+		try {
+			MimeMessage msg = javaMailSender.createMimeMessage();
+			// true = multipart message
+			MimeMessageHelper helper = new MimeMessageHelper(msg, true);
+			helper.setTo(mailReceiver);
+			helper.setSubject(subject);
+			helper.setText(textMessage, true);
+			updateMimeMessageWithAttachment(helper, attchmentFileName);
+			javaMailSender.send(msg);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new IllegalStateException("Mail service failed with Exception: " + e.getMessage());
+
+		}
+
+	}
+	
+	private void updateMimeMessageWithAttachment(MimeMessageHelper helper,String attachmentFile) throws MessagingException
+	{
+		if (org.springframework.util.StringUtils.hasText(attachmentFile))
+			helper.addAttachment(attachmentFile, new ClassPathResource(attachmentFile));
 	}
 
 }

@@ -20,6 +20,7 @@ public class RecoverAuditDBService {
 		 * System.out.println("getFallBackEntry() 2"+ObjectUtils.isEmpty(
 		 * getFallBackEntry()));
 		 */
+		System.out.println("getFallBackEntry() "+getFallBackEntry());
 		return ObjectUtils.isEmpty(getFallBackEntry());
 
 	}
